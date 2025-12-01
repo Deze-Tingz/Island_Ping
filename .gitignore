@@ -1,0 +1,77 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+*.lock
+pubspec.lock
+
+# Android
+android/.gradle/
+android/local.properties
+android/*.iml
+android/app/debug/
+android/app/release/
+android/app/profile/
+**/android/captures/
+**/android/.externalNativeBuild/
+**/android/.cxx/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/ServiceDefinitions.json
+
+# Windows/macOS/Linux desktop
+windows/flutter/ephemeral/
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# Firebase (KEEP SECURE - DO NOT COMMIT)
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# Environment
+.env
+*.env
+secrets.properties
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Coverage
+coverage/
+*.lcov
+
+# Symbols
+app.*.symbols
+app.*.map.json
+
+# Exceptions to above rules
+!**/ios/**/default.mode1v3
+!**/ios/**/default.mode2v3
+!**/ios/**/default.pbxuser
+!**/ios/**/default.perspectivev3
