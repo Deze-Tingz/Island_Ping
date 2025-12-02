@@ -38,9 +38,9 @@ class LocationService {
     }
 
     try {
-      // Use low accuracy for privacy (approximate location only)
+      // Use high accuracy for precise location
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low, // ~1km accuracy for privacy
+        desiredAccuracy: LocationAccuracy.high, // Best available accuracy
       );
 
       // Get area name from coordinates

@@ -12,15 +12,21 @@ void main() async {
   // Initialize Hive for local storage
   await Hive.initFlutter();
 
-  // Initialize Firebase
+  // Initialize Firebase (without requesting permissions yet)
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize Firebase Messaging
-  final firebaseService = FirebaseService();
-  await firebaseService.initialize();
-  await firebaseService.subscribeToOutageAlerts();
+  // Check if onboarding is complete before requesting permissions
+  final settingsBox = await Hive.openBox('settings');
+  final hasCompletedOnboarding = settingsBox.get('onboarding_complete', defaultValue: false) as bool;
+
+  if (hasCompletedOnboarding) {
+    // Only request permissions after onboarding is complete
+    final firebaseService = FirebaseService();
+    await firebaseService.initialize();
+    await firebaseService.subscribeToOutageAlerts();
+  }
 
   runApp(
     const ProviderScope(

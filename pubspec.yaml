@@ -24,7 +24,8 @@ dependencies:
   firebase_auth: ^4.16.0
 
   # Maps & Location
-  google_maps_flutter: ^2.5.3
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
   geolocator: ^10.1.0
   geocoding: ^2.1.1
 
@@ -37,7 +38,7 @@ dependencies:
   connectivity_plus: ^5.0.2
 
   # Notifications
-  flutter_local_notifications: ^16.3.0
+  flutter_local_notifications: ^18.0.0
 
   # Navigation
   go_router: ^13.0.1
@@ -46,6 +47,12 @@ dependencies:
   intl: ^0.18.1
   equatable: ^2.0.5
   uuid: ^4.2.2
+
+  # Device & Network Info
+  device_info_plus: ^10.1.0
+  network_info_plus: ^5.0.3
+  battery_plus: ^6.0.1
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
@@ -57,10 +64,19 @@ dev_dependencies:
   build_runner: ^2.4.8
   hive_generator: ^2.0.1
 
+  # App Icon Generation
+  flutter_launcher_icons: ^0.11.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "images/xIsland_Ping_Logo.png"
+  adaptive_icon_background: "#1A6B7C"
+  adaptive_icon_foreground: "images/xIsland_Ping_Logo.png"
+
 flutter:
   uses-material-design: true
 
-  # Assets (to be added as needed)
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+  assets:
+    - assets/images/
+    - images/

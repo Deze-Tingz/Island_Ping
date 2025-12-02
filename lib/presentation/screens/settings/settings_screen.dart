@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 
-// Settings state provider
+// Settings state providers
 final notificationsEnabledProvider = StateProvider<bool>((ref) => true);
 final locationEnabledProvider = StateProvider<bool>((ref) => true);
 final darkModeProvider = StateProvider<bool>((ref) => false);
@@ -14,218 +15,594 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
-      body: ListView(
-        children: [
-          _buildSection(
-            title: 'Notifications',
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+        body: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             children: [
-              _buildSwitchTile(
-                context,
-                ref,
-                title: 'Push Notifications',
-                subtitle: 'Receive alerts about outages in your area',
-                icon: Icons.notifications,
-                provider: notificationsEnabledProvider,
-              ),
-            ],
-          ),
-          _buildSection(
-            title: 'Location',
-            children: [
-              _buildSwitchTile(
-                context,
-                ref,
-                title: 'Location Services',
-                subtitle: 'Allow approximate location for area-based alerts',
-                icon: Icons.location_on,
-                provider: locationEnabledProvider,
-              ),
-              ListTile(
-                leading: const Icon(Icons.privacy_tip),
-                title: const Text('Privacy Note'),
-                subtitle: Text(
-                  'We only use approximate location (neighborhood level) and never store exact addresses.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              const SizedBox(height: 20),
+              // Header
+              Text(
+                'Settings',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                 ),
               ),
-            ],
-          ),
-          _buildSection(
-            title: 'Connectivity Check',
-            children: [
-              _buildIntervalSelector(context, ref),
-            ],
-          ),
-          _buildSection(
-            title: 'Appearance',
-            children: [
-              _buildSwitchTile(
-                context,
-                ref,
-                title: 'Dark Mode',
-                subtitle: 'Use dark theme',
-                icon: Icons.dark_mode,
-                provider: darkModeProvider,
-              ),
-            ],
-          ),
-          _buildSection(
-            title: 'About',
-            children: [
-              ListTile(
-                leading: const Icon(Icons.info),
-                title: const Text('Version'),
-                subtitle: const Text(AppConstants.appVersion),
-              ),
-              ListTile(
-                leading: const Icon(Icons.description),
-                title: const Text('Terms of Service'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showComingSoon(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.privacy_tip),
-                title: const Text('Privacy Policy'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showComingSoon(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.help),
-                title: const Text('Help & Support'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showComingSoon(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OutlinedButton(
-              onPressed: () => _showSignOutDialog(context),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.offline,
-              ),
-              child: const Text('Sign Out'),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: Text(
-              'Island Ping v${AppConstants.appVersion}',
-              style: TextStyle(
-                color: Colors.grey.shade500,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
+              const SizedBox(height: 32),
 
-  Widget _buildSection({
-    required String title,
-    required List<Widget> children,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+              // Notifications group
+              _SectionHeader(title: 'Notifications', isDark: isDark),
+              _SettingsGroup(
+                isDark: isDark,
+                children: [
+                  _SwitchTile(
+                    icon: Icons.notifications_none_rounded,
+                    iconColor: AppColors.coral,
+                    title: 'Push Notifications',
+                    subtitle: 'Outage alerts for your area',
+                    value: ref.watch(notificationsEnabledProvider),
+                    onChanged: (v) => ref.read(notificationsEnabledProvider.notifier).state = v,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // Location group
+              _SectionHeader(title: 'Location', isDark: isDark),
+              _SettingsGroup(
+                isDark: isDark,
+                children: [
+                  _SwitchTile(
+                    icon: Icons.location_on_outlined,
+                    iconColor: AppColors.cyan,
+                    title: 'Location Services',
+                    subtitle: 'Enable for accurate alerts',
+                    value: ref.watch(locationEnabledProvider),
+                    onChanged: (v) => ref.read(locationEnabledProvider.notifier).state = v,
+                    isDark: isDark,
+                  ),
+                  _Divider(isDark: isDark),
+                  _InfoTile(
+                    icon: Icons.shield_outlined,
+                    iconColor: AppColors.online,
+                    title: 'Your Privacy',
+                    subtitle: 'Only approximate location is used',
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // Connection group
+              _SectionHeader(title: 'Connection', isDark: isDark),
+              _SettingsGroup(
+                isDark: isDark,
+                children: [
+                  _IntervalTile(
+                    value: ref.watch(autoCheckIntervalProvider),
+                    onChanged: (v) => ref.read(autoCheckIntervalProvider.notifier).state = v,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // Appearance group
+              _SectionHeader(title: 'Appearance', isDark: isDark),
+              _SettingsGroup(
+                isDark: isDark,
+                children: [
+                  _SwitchTile(
+                    icon: Icons.dark_mode_outlined,
+                    iconColor: const Color(0xFF9B59B6),
+                    title: 'Dark Mode',
+                    subtitle: 'Switch theme appearance',
+                    value: ref.watch(darkModeProvider),
+                    onChanged: (v) => ref.read(darkModeProvider.notifier).state = v,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // About group
+              _SectionHeader(title: 'About', isDark: isDark),
+              _SettingsGroup(
+                isDark: isDark,
+                children: [
+                  _NavigationTile(
+                    icon: Icons.info_outline_rounded,
+                    iconColor: AppColors.info,
+                    title: 'Version',
+                    trailing: Text(
+                      AppConstants.appVersion,
+                      style: TextStyle(
+                        color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                      ),
+                    ),
+                    isDark: isDark,
+                  ),
+                  _Divider(isDark: isDark),
+                  _NavigationTile(
+                    icon: Icons.description_outlined,
+                    iconColor: AppColors.teal,
+                    title: 'Terms of Service',
+                    onTap: () => _showComingSoon(context),
+                    isDark: isDark,
+                  ),
+                  _Divider(isDark: isDark),
+                  _NavigationTile(
+                    icon: Icons.privacy_tip_outlined,
+                    iconColor: AppColors.cyan,
+                    title: 'Privacy Policy',
+                    onTap: () => _showComingSoon(context),
+                    isDark: isDark,
+                  ),
+                  _Divider(isDark: isDark),
+                  _NavigationTile(
+                    icon: Icons.help_outline_rounded,
+                    iconColor: AppColors.coral,
+                    title: 'Help & Support',
+                    onTap: () => _showComingSoon(context),
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Sign out button
+              GestureDetector(
+                onTap: () => _showSignOut(context, isDark),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.offline,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Footer
+              Center(
+                child: Text(
+                  'Island Ping v${AppConstants.appVersion}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
-        ...children,
-        const Divider(),
-      ],
-    );
-  }
-
-  Widget _buildSwitchTile(
-    BuildContext context,
-    WidgetRef ref, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required StateProvider<bool> provider,
-  }) {
-    final value = ref.watch(provider);
-
-    return SwitchListTile(
-      secondary: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      value: value,
-      onChanged: (newValue) {
-        ref.read(provider.notifier).state = newValue;
-      },
-    );
-  }
-
-  Widget _buildIntervalSelector(BuildContext context, WidgetRef ref) {
-    final interval = ref.watch(autoCheckIntervalProvider);
-
-    return ListTile(
-      leading: const Icon(Icons.timer),
-      title: const Text('Check Interval'),
-      subtitle: Text('Check connectivity every $interval seconds'),
-      trailing: DropdownButton<int>(
-        value: interval,
-        underline: const SizedBox(),
-        items: const [
-          DropdownMenuItem(value: 15, child: Text('15s')),
-          DropdownMenuItem(value: 30, child: Text('30s')),
-          DropdownMenuItem(value: 60, child: Text('1m')),
-          DropdownMenuItem(value: 120, child: Text('2m')),
-          DropdownMenuItem(value: 300, child: Text('5m')),
-        ],
-        onChanged: (value) {
-          if (value != null) {
-            ref.read(autoCheckIntervalProvider.notifier).state = value;
-          }
-        },
       ),
     );
   }
 
   void _showComingSoon(BuildContext context) {
+    HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Coming soon!')),
+      SnackBar(
+        content: const Text('Coming soon'),
+        backgroundColor: AppColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(20),
+      ),
     );
   }
 
-  void _showSignOutDialog(BuildContext context) {
+  void _showSignOut(BuildContext context, bool isDark) {
+    HapticFeedback.mediumImpact();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Sign Out?',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+          ),
+        ),
+        content: Text(
+          'You will need to sign in again to access your account.',
+          style: TextStyle(
+            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Implement sign out with FirebaseAuth
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Signed out')),
+                SnackBar(
+                  content: const Text('Signed out'),
+                  backgroundColor: AppColors.online,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  margin: const EdgeInsets.all(20),
+                ),
               );
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.offline),
-            child: const Text('Sign Out'),
+            child: Text(
+              'Sign Out',
+              style: TextStyle(
+                color: AppColors.offline,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final bool isDark;
+
+  const _SectionHeader({required this.title, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  final List<Widget> children;
+  final bool isDark;
+
+  const _SettingsGroup({required this.children, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  final bool isDark;
+
+  const _Divider({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Divider(
+      height: 1,
+      indent: 56,
+      color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+    );
+  }
+}
+
+class _SwitchTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final bool isDark;
+
+  const _SwitchTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
+            activeColor: AppColors.teal,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool isDark;
+
+  const _InfoTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavigationTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final bool isDark;
+
+  const _NavigationTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    this.trailing,
+    this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                ),
+              ),
+            ),
+            if (trailing != null) trailing!,
+            if (onTap != null)
+              Icon(
+                Icons.chevron_right_rounded,
+                color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _IntervalTile extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChanged;
+  final bool isDark;
+
+  const _IntervalTile({
+    required this.value,
+    required this.onChanged,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.timer_outlined, color: AppColors.warning, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Check Interval',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                  ),
+                ),
+                Text(
+                  'Every $value seconds',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButton<int>(
+              value: value,
+              underline: const SizedBox(),
+              isDense: true,
+              icon: const Icon(Icons.expand_more_rounded, size: 18),
+              items: const [
+                DropdownMenuItem(value: 15, child: Text('15s')),
+                DropdownMenuItem(value: 30, child: Text('30s')),
+                DropdownMenuItem(value: 60, child: Text('1m')),
+                DropdownMenuItem(value: 120, child: Text('2m')),
+              ],
+              onChanged: (v) {
+                if (v != null) {
+                  HapticFeedback.selectionClick();
+                  onChanged(v);
+                }
+              },
+            ),
           ),
         ],
       ),
